@@ -1,12 +1,13 @@
-const { where } = require('sequelize');
 const db = require('../config/database');
+const { Organization, User } = db;
 
-// Handler for creating a new organization
-const createOrg = async (req, res) => {
+// Create an organization
+const createOrganization = async (req, res) => {
     const { name, billingEmail } = req.body;
 
-    if (!name, !billingEmail) {
-        return res.status(400).json({ error: "Name and Billing email are required" })
+    // Validate input
+    if (!name || !billingEmail) {
+        return res.status(400).json({ error: "Name and billingEmail are required" });
     }
 
     if (!/\S+@\S+\.\S+/.test(billingEmail)) {
@@ -14,24 +15,41 @@ const createOrg = async (req, res) => {
     }
 
     try {
-        // Check if an organization with this name already exists
-        const existingOrg = await db.Organization.findOne({
-            where: { name: name }
-        })
+        const existingOrg = await Organization.findOne({ where: { name } });
 
         if (existingOrg) {
             return res.status(409).json({ error: "Organization with this name already exists" });
-        } else {
-            const organization = await db.Organization.create({ name, billingEmail })
-            res.status(201).json({ message: "Organization created successfully", organization });
         }
+
+        const newOrg = await Organization.create({ name, billingEmail });
+        return res.status(201).json(newOrg);
+
     } catch (error) {
         console.error("Error creating organization:", error);
-        if (error.name === 'SequelizeValidationError') {
-            const errors = error.errors.map(err => err.message);
-            return res.status(400).json({ error: errors });
-        }
-        res.status(500).json({ error: "Failed to create organization" });
-
+        return res.status(500).json({ error: "Failed to create organization" });
     }
-}
+};
+
+// Get all organizations with users
+const getAllOrganizations = async (req, res) => {
+    try {
+        const organizations = await Organization.findAll({
+            include: [{
+                model: User,
+                as: 'users',
+                required: false
+            }]
+        });
+
+        return res.status(200).json(organizations);
+
+    } catch (error) {
+        console.error("Error fetching organizations:", error);
+        return res.status(500).json({ error: "Failed to fetch organizations" });
+    }
+};
+
+module.exports = {
+    createOrganization,
+    getAllOrganizations
+};

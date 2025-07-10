@@ -1,7 +1,8 @@
-require("dotenv").config;
+require("dotenv").config(); // ✅ FIXED: You forgot to call it (added `()`)
+
 const { Sequelize, DataTypes } = require("sequelize");
 const path = require("path");
-const fs = require("fs")
+const fs = require("fs");
 
 const sequelize = new Sequelize(
     process.env.DB_NAME,
@@ -14,63 +15,63 @@ const sequelize = new Sequelize(
         logging: console.log,
         timezone: '+05:30',
     }
-)
+);
 
-const db = {}
+const db = {};
 
+// Base Sequelize references
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-//load all models from model directory
+// Load all models
 fs.readdirSync(path.join(__dirname, "../models"))
-    .filter(file => {
-        return (
-            file.indexOf(".") !== 0 && file !== "index.js" && file.slice(-3) === '.js' // Exclude index.js if you create one later for associations
-        );
-    })
+    .filter(file => file.endsWith(".js"))
     .forEach(file => {
-        const model = require(path.join(__dirname, '../models', file))(sequelize, DataTypes);
-        db[model.name] = model
+        const modelDef = require(path.join(__dirname, "../models", file));
+        const models = modelDef(sequelize, DataTypes);
+
+        // ✅ If multiple models are returned (combined file), spread them into db
+        if (typeof models === "object" && !models.name) {
+            Object.entries(models).forEach(([modelName, model]) => {
+                db[modelName] = model;
+            });
+        } else {
+            db[models.name] = models;
+        }
     });
 
-// setup associations after all models are loaded
+// Setup associations
 Object.keys(db).forEach(modelName => {
     if (db[modelName].associate) {
-        db[modelName].associate(db)
+        db[modelName].associate(db);
     }
-})
+});
 
-// Function to connect and sync (auto-migrate) database
+// Connect and migrate
 db.connectAndMigrate = async () => {
     try {
         await sequelize.authenticate();
-        console.log('Database connection has been established successfully.');
+        console.log("✅ Connected to database");
 
-        console.log("Running database migrations...");
-        // `alter: true` attempts to change tables to match models, useful in development
-        await sequelize.sync({ alter: true });
-        console.log("Database migration completed!");
-    } catch (error) {
-        console.error('Unable to connect to the database or run migrations:', error);
-        process.exit(1); // Exit process if database connection/migration fails
+        await sequelize.sync({ alter: true }); // Alter for dev mode
+        console.log("✅ Database synced");
+    } catch (err) {
+        console.error("❌ Database connection/migration error:", err);
+        process.exit(1);
     }
-}
+};
 
-// Function to clear database and re-migrate (for development/testing)
+// Drop and re-migrate (for testing/dev)
 db.clearDBAndMigrate = async () => {
     try {
-        console.log("Clearing database...");
-        await sequelize.drop(); // Drops all tables
-        console.log("Database cleared.");
+        console.log("⚠️ Dropping all tables...");
+        await sequelize.drop();
 
-        console.log("Running migrations again...");
-        await sequelize.sync({ force: true }); // Forces table recreation
-        console.log("Database re-migrated successfully!");
-        return null;
+        await sequelize.sync({ force: true });
+        console.log("✅ Re-migrated database.");
     } catch (error) {
-        console.error("Failed to clear and re-migrate database:", error);
-        // Propagate error for handler to catch
-        throw new Error(`Failed to clear and re-migrate database: ${error.message}`);
+        console.error("❌ Failed to clear and re-migrate:", error);
+        throw new Error(`Failed to re-migrate: ${error.message}`);
     }
 };
 
