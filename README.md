@@ -1,52 +1,153 @@
-🧾 Invoice generator (Node.js + Express Version)
-🧠 Tech Stack
-Node.js (JavaScript backend)
+# 🧾 Subscription Billing System (Node.js + Express + Sequelize + PostgreSQL)
 
-Express.js (Web framework)
+A robust backend application that handles multi-organization subscription billing, including user management, subscription plans, invoicing, payments, refunds, and authorization using JWT.
 
-PostgreSQL (Database)
-Prisma (ORM )
+## 🚀 Features
 
-JWT (for user auth)
+- 🔐 JWT-based authentication and role validation
+- 🏢 Multi-organization architecture
+- 👥 User registration, login, and organizational association
+- 📦 Subscription plan creation and upgrades
+- 💳 Invoice generation and payment handling
+- 💸 Refund processing with validation
+- 📊 Organization summary with recent invoices & payments
+- 📥 Sequelize ORM with auto migrations and associations
 
-Dotenv (for env vars)
+---
 
-📁 Folder Structure
+## 🏗️ Tech Stack
 
-invoxa-node/
-├── controllers/          # Business logic (org, user, invoice)
-├── models/               # Sequelize/Prisma models
-├── routes/               # Express routes (API endpoints)
-├── services/             # Helper logic (prorated billing etc.)
-├── config/               # DB config and environment setup
-├── app.js                # Main express app
-├── server.js             # Starts the server
-├── .env                  # DB credentials
-└── package.json
+- **Node.js** + **Express** for the backend server
+- **PostgreSQL** as the database
+- **Sequelize** for ORM and model definitions
+- **JWT** for secure auth middleware
+- **dotenv**, **bcryptjs**, **jsonwebtoken**, etc.
 
-📌 Required Features to Build
+---
 
-Feature	Endpoint	Description
+## 📁 Project Structure
 
-Org Create	POST /organizations	Add org
-Org Summary	GET /org/:id/summary	Org info
-User Create	POST /users	Add user
-User Subscriptions	GET /user/:id/subscriptions	User's active plans
-Subscribe to Plan	POST /subscribe	Org subscribes to plan
-Invoice Generation	Auto + Manual	When subscribed/upgraded
-Pay Invoice	POST /pay_invoice	Mark as paid
-Upgrade Plan	POST /upgrade_plan	With proration
-Get Invoice	GET /invoice/:id	Get invoice detail
-Refund Payment	POST /refund	Refund system
-Add Plan	POST /subscription_plans	Create plan
-Clear DB	POST /admin/clear_db	(For dev use)
-Health Check	GET /ping	Check server
+\`\`\`bash
+.
+├── config/
+│ └── database.js # Sequelize DB setup & model loading
+├── controllers/ # Business logic for routes
+│ ├── authController.js
+│ ├── organizationController.js
+│ ├── subscriptionController.js
+│ └── userController.js
+├── middleware/
+│ └── authMiddleware.js # JWT authentication middleware
+├── models/ # Sequelize models (not shown here)
+├── routes/
+│ └── routes.js # Combined routes (auth, org, user, subs)
+├── utils/
+│ └── utils.js # Utility for checking user existence
+├── .env
+├── app.js (or server.js) # Entry point
+\`\`\`
 
-🔄 Invoices and Subscriptions Logic
-Use cron jobs or trigger logic to auto-generate invoices when subscription is active.
+---
 
-Add prorated billing in services/billing.js.
+## 🧪 API Endpoints
 
-Track start and end dates of subscriptions.
+> All protected routes require \`Authorization: Bearer <token>\`
 
-Use timestamps to calculate partial month usage.
+### 🛂 Auth
+
+| Method | Endpoint          | Description         |
+| ------ | ----------------- | ------------------- |
+| POST   | \`/api/register\` | Register user       |
+| POST   | \`/api/login\`    | Login and get token |
+
+---
+
+### 🏢 Organization
+
+| Method | Endpoint                          | Description                        |
+| ------ | --------------------------------- | ---------------------------------- |
+| POST   | \`/api/createOrganization\`       | Create new organization            |
+| GET    | \`/api/getAllOrganizations\`      | List all organizations             |
+| GET    | \`/api/organization/:id/summary\` | Summary (users, invoices, revenue) |
+
+---
+
+### 👥 User
+
+| Method | Endpoint                        | Description              |
+| ------ | ------------------------------- | ------------------------ |
+| POST   | \`/api/createUser\`             | Create a user            |
+| GET    | \`/api/getAllUsers\`            | List users               |
+| GET    | \`/api/user/:id/subscriptions\` | Get user's subscriptions |
+
+---
+
+### 📦 Subscription & Invoicing
+
+| Method | Endpoint                        | Description                    |
+| ------ | ------------------------------- | ------------------------------ |
+| POST   | \`/api/createSubscriptionPlan\` | Create plan for organization   |
+| POST   | \`/api/subscribe\`              | Subscribe a user to a plan     |
+| POST   | \`/api/pay_invoice\`            | Pay an invoice                 |
+| GET    | \`/api/invoice/:id\`            | Get invoice details            |
+| POST   | \`/api/upgrade_plan\`           | Upgrade a user’s plan          |
+| POST   | \`/api/refund\`                 | Process a refund for a payment |
+
+---
+
+## ⚙️ Environment Variables (\`.env\`)
+
+\`\`\`
+PORT=5000
+DB_NAME=your_db_name
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_DIALECT=postgres
+JWT_SECRET=your_jwt_secret
+\`\`\`
+
+---
+
+## 🛠️ Setup Instructions
+
+1. Clone the repo
+
+\`\`\`bash
+git clone https://github.com/your-username/subscription-billing-system.git
+cd subscription-billing-system
+\`\`\`
+
+2. Install dependencies
+
+\`\`\`bash
+npm install
+\`\`\`
+
+3. Create \`.env\` file (see above)
+
+4. Start the server
+
+\`\`\`bash
+npm start
+\`\`\`
+
+5. Test with Postman or any API tool
+
+---
+
+## 📌 Notes
+
+- Sequelize models are dynamically loaded from the \`models/\` directory.
+- Use \`db.connectAndMigrate()\` for syncing schema (\`alter: true\` for dev).
+- Custom error handling & authorization integrated in routes.
+
+---
+
+## 🧑‍💻 Author
+
+**Anjali Kumari**  
+[GitHub](https://github.com/k25anjali)
+
+---
